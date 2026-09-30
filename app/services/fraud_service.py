@@ -1,14 +1,46 @@
+from pathlib import Path
+
+import joblib
+import pandas as pd
+
 from app.schemas.transaction import TransactionRequest
 
 
-def calculate_risk_score(transaction: TransactionRequest) -> int:
-    """
-    Calculate a rule-based fraud risk score between 0 and 100.
-    """
+MODEL_PATH = Path("ml/model.pkl")
 
+FEATURE_COLUMNS = [
+    "amount",
+    "transaction_hour",
+    "account_age_days",
+    "previous_transactions_24h",
+    "failed_attempts_24h",
+    "foreign_transaction",
+    "new_device",
+]
+
+
+_model = None
+
+
+def load_model():
+    global _model
+
+    if _model is None:
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(
+                "Fraud detection model not found. "
+                "Run `python data/generate_data.py` and "
+                "`python ml/train_model.py` first."
+            )
+
+        _model = joblib.load(MODEL_PATH)
+
+    return _model
+
+
+def calculate_risk_score(transaction: TransactionRequest) -> int:
     score = 0
 
-    # High transaction amount
     if transaction.amount >= 5000:
         score += 25
     elif transaction.amount >= 2000:
@@ -16,33 +48,27 @@ def calculate_risk_score(transaction: TransactionRequest) -> int:
     elif transaction.amount >= 1000:
         score += 8
 
-    # Unusual transaction time
     if transaction.transaction_hour <= 5:
         score += 12
 
-    # New account
     if transaction.account_age_days < 30:
         score += 15
     elif transaction.account_age_days < 90:
         score += 8
 
-    # High transaction frequency
     if transaction.previous_transactions_24h >= 20:
         score += 15
     elif transaction.previous_transactions_24h >= 10:
         score += 8
 
-    # Failed attempts
     if transaction.failed_attempts_24h >= 5:
         score += 15
     elif transaction.failed_attempts_24h >= 2:
         score += 8
 
-    # Foreign transaction
     if transaction.foreign_transaction:
         score += 10
 
-    # New device
     if transaction.new_device:
         score += 8
 
@@ -50,10 +76,6 @@ def calculate_risk_score(transaction: TransactionRequest) -> int:
 
 
 def get_risk_level(score: int) -> str:
-    """
-    Convert numerical risk score into a risk category.
-    """
-
     if score >= 70:
         return "critical"
 
@@ -66,29 +88,59 @@ def get_risk_level(score: int) -> str:
     return "low"
 
 
-def calculate_fraud_probability(score: int) -> float:
-    """
-    Convert risk score into a temporary fraud probability.
+def predict_fraud_probability(
+    transaction: TransactionRequest,
+) -> float:
+    model = load_model()
 
-    This will later be replaced by the machine learning model.
-    """
+    input_data = pd.DataFrame(
+        [
+            {
+                "amount": transaction.amount,
+                "transaction_hour": transaction.transaction_hour,
+                "account_age_days": transaction.account_age_days,
+                "previous_transactions_24h": transaction.previous_transactions_24h,
+                "failed_attempts_24h": transaction.failed_attempts_24h,
+                "foreign_transaction": int(
+                    transaction.foreign_transaction
+                ),
+                "new_device": int(
+                    transaction.new_device
+                ),
+            }
+        ],
+        columns=FEATURE_COLUMNS,
+    )
 
-    return round(score / 100, 2)
+    probability = model.predict_proba(
+        input_data
+    )[0][1]
+
+    return round(
+        float(probability),
+        4,
+    )
 
 
-def analyze_transaction(transaction: TransactionRequest) -> dict:
-    """
-    Analyze a transaction and return fraud intelligence results.
-    """
+def analyze_transaction(
+    transaction: TransactionRequest,
+) -> dict:
+    risk_score = calculate_risk_score(
+        transaction
+    )
 
-    risk_score = calculate_risk_score(transaction)
-    risk_level = get_risk_level(risk_score)
-    fraud_probability = calculate_fraud_probability(risk_score)
+    risk_level = get_risk_level(
+        risk_score
+    )
+
+    fraud_probability = predict_fraud_probability(
+        transaction
+    )
 
     return {
         "transaction_id": transaction.transaction_id,
         "fraud_probability": fraud_probability,
         "risk_score": risk_score,
         "risk_level": risk_level,
-        "is_suspicious": risk_score >= 50,
+        "is_suspicious": fraud_probability >= 0.50,
     }
