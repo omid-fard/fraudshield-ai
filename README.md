@@ -1,5 +1,5 @@
 # FraudShield AI
-
+![Python Tests](https://github.com/omid-fard/fraudshield-ai/actions/workflows/python-tests.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-green)
 ![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Random%20Forest-orange)
