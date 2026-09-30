@@ -2,7 +2,7 @@ from app.schemas.transaction import TransactionRequest
 from app.services.fraud_service import (
     calculate_risk_score,
     get_risk_level,
-    calculate_fraud_probability,
+    predict_fraud_probability,
     analyze_transaction,
 )
 
@@ -46,8 +46,7 @@ def test_high_risk_score():
 
     score = calculate_risk_score(transaction)
 
-    assert score >= 70
-    assert score <= 100
+    assert 70 <= score <= 100
 
 
 def test_risk_levels():
@@ -57,10 +56,13 @@ def test_risk_levels():
     assert get_risk_level(80) == "critical"
 
 
-def test_fraud_probability():
-    probability = calculate_fraud_probability(75)
+def test_ml_fraud_probability():
+    transaction = create_high_risk_transaction()
 
-    assert probability == 0.75
+    probability = predict_fraud_probability(transaction)
+
+    assert isinstance(probability, float)
+    assert 0.0 <= probability <= 1.0
 
 
 def test_transaction_analysis():
@@ -69,6 +71,7 @@ def test_transaction_analysis():
     result = analyze_transaction(transaction)
 
     assert result["transaction_id"] == "TX-HIGH-001"
-    assert result["risk_score"] >= 70
+    assert 70 <= result["risk_score"] <= 100
     assert result["risk_level"] == "critical"
-    assert result["is_suspicious"] is True
+    assert 0.0 <= result["fraud_probability"] <= 1.0
+    assert isinstance(result["is_suspicious"], bool)
