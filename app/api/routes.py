@@ -1,6 +1,7 @@
+import json
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.schemas.transaction import (
     TransactionRequest,
@@ -16,6 +17,7 @@ router = APIRouter(
 
 
 MODEL_PATH = Path("ml/model.pkl")
+METRICS_PATH = Path("ml/metrics.json")
 
 
 @router.post(
@@ -51,3 +53,27 @@ def model_status():
             "new_device",
         ],
     }
+
+
+@router.get(
+    "/model/metrics",
+    summary="Get fraud detection model metrics",
+)
+def model_metrics():
+    if not METRICS_PATH.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Model metrics are not available. "
+                "Train the model first."
+            ),
+        )
+
+    with open(
+        METRICS_PATH,
+        "r",
+        encoding="utf-8",
+    ) as metrics_file:
+        metrics = json.load(metrics_file)
+
+    return metrics
