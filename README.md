@@ -1,2 +1,11 @@
-# fraudshield-ai
-AI-powered financial fraud detection and transaction risk intelligence platform built with Python, FastAPI and Machine Learning.
+fastapi==0.118.0
+uvicorn==0.37.0
+pandas==2.3.3
+numpy==2.3.3
+scikit-learn==1.7.2
+joblib==1.5.2
+pydantic==2.11.9
+sqlalchemy==2.0.43
+pytest==8.4.2
+httpx==0.28.1
+python-dotenv==1.1.1
