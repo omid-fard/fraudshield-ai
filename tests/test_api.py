@@ -79,3 +79,24 @@ def test_model_status_endpoint():
     ]
 
     assert data["features"] == expected_features
+
+
+def test_model_metrics_endpoint():
+    response = client.get("/api/v1/model/metrics")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["model_type"] == "RandomForestClassifier"
+    assert data["model_version"] == "1.0.0"
+
+    assert 0.0 <= data["accuracy"] <= 1.0
+    assert 0.0 <= data["precision"] <= 1.0
+    assert 0.0 <= data["recall"] <= 1.0
+    assert 0.0 <= data["f1_score"] <= 1.0
+    assert 0.0 <= data["roc_auc"] <= 1.0
+
+    assert data["training_samples"] > 0
+    assert data["test_samples"] > 0
+    assert data["feature_count"] == 7
