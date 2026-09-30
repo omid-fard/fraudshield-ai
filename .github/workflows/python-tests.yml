@@ -37,3 +37,26 @@ jobs:
         env:
           PYTHONPATH: .
         run: python -m pytest -v
+
+      - name: Build Docker image
+        run: docker build -t fraudshield-ai .
+
+      - name: Start Docker container
+        run: |
+          docker run -d \
+            --name fraudshield-api \
+            -p 8000:8000 \
+            fraudshield-ai
+
+      - name: Wait for API
+        run: sleep 5
+
+      - name: Test Docker health endpoint
+        run: |
+          curl --fail http://localhost:8000/health
+
+      - name: Stop Docker container
+        if: always()
+        run: |
+          docker stop fraudshield-api || true
+          docker rm fraudshield-api || true
