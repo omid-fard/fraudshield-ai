@@ -1,5 +1,11 @@
 # FraudShield AI
 
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-green)
+![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Random%20Forest-orange)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
+![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-black)
+
 AI-powered financial fraud detection and transaction risk intelligence platform built with Python, FastAPI, Machine Learning, Docker, and GitHub Actions.
 
 ## Overview
